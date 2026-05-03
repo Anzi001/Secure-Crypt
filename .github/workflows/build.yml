@@ -1,29 +1,35 @@
-name: Build and Release
+name: Build and Release Cross-Platform
 on:
   push:
     tags:
-      - 'v*' 
+      - 'v*' # Triggers whenever you push a tag like v1.0, v2.0, etc.
 
 jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
+        # Run three separate computers at once
+        os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
+    
     steps:
-      - name: Checkout
+      - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Setup Python
+
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
       - name: Install Dependencies
         run: pip install pyinstaller cryptography
-      
+
+      # 1. WINDOWS BUILD
       - name: Build Windows
         if: matrix.os == 'windows-latest'
         run: pyinstaller --noconsole --onefile --icon="icon.ico" --name "FileEncrypter_Win" main.py
-      
+
+      # 2. MAC BUILD (Includes Zipping)
       - name: Build Mac
         if: matrix.os == 'macos-latest'
         run: |
@@ -31,12 +37,19 @@ jobs:
           cd dist
           zip -r ../FileEncrypter_Mac.zip FileEncrypter_Mac.app
 
+      # 3. LINUX BUILD
+      - name: Build Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: pyinstaller --noconsole --onefile --name "FileEncrypter_Linux" main.py
+
+      # 4. UPLOAD STAGE (Saves files temporarily)
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifact-${{ matrix.os }}
+          name: build-${{ matrix.os }}
           path: |
             dist/FileEncrypter_Win.exe
+            dist/FileEncrypter_Linux
             FileEncrypter_Mac.zip
 
   release:
@@ -45,13 +58,16 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Download Artifacts
+      - name: Download All Artifacts
         uses: actions/download-artifact@v4
         with:
-          path: all-artifacts
+          path: all-assets
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          # This glob pattern (**/) finds the files regardless of folder structure
           files: |
-            all-artifacts/build-artifact-windows-latest/FileEncrypter_Win.exe
-            all-artifacts/build-artifact-macos-latest/FileEncrypter_Mac.zip
+            all-assets/**/FileEncrypter_Win.exe
+            all-assets/**/FileEncrypter_Mac.zip
+            all-assets/**/FileEncrypter_Linux
