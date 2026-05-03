@@ -24,23 +24,26 @@ jobs:
       - name: Install Dependencies
         run: pip install pyinstaller cryptography
 
-      # 1. WINDOWS BUILD
+      # WINDOWS BUILD
       - name: Build Windows
         if: matrix.os == 'windows-latest'
-        run: pyinstaller --noconsole --onefile --icon="icon.ico" --name "FileEncrypter_Win" main.py
+        run: |
+          pyinstaller --noconsole --onefile --icon="icon.ico" --name "FileEncrypter_Win" main.py
 
-      # 2. MAC BUILD (Includes Zipping)
+      # MAC BUILD
       - name: Build Mac
         if: matrix.os == 'macos-latest'
         run: |
+          # Use --icon for the .app bundle
           pyinstaller --noconsole --onefile --windowed --icon="icon.icns" --name "FileEncrypter_Mac" main.py
           cd dist
           zip -r ../FileEncrypter_Mac.zip FileEncrypter_Mac.app
 
-      # 3. LINUX BUILD
+      # LINUX BUILD (Icons work differently on Linux, usually bundled as data)
       - name: Build Linux
         if: matrix.os == 'ubuntu-latest'
-        run: pyinstaller --noconsole --onefile --name "FileEncrypter_Linux" main.py
+        run: |
+          pyinstaller --noconsole --onefile --name "FileEncrypter_Linux" main.py
 
       # 4. UPLOAD STAGE (Saves files temporarily)
       - name: Upload Artifact
