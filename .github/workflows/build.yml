@@ -34,9 +34,9 @@ jobs:
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.os }}-build
+          name: build-artifact-${{ matrix.os }}
           path: |
-            dist/*.exe
+            dist/FileEncrypter_Win.exe
             FileEncrypter_Mac.zip
 
   release:
@@ -47,9 +47,11 @@ jobs:
     steps:
       - name: Download Artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: all-artifacts
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            windows-latest-build/FileEncrypter_Win.exe
-            macos-latest-build/FileEncrypter_Mac.zip
+            all-artifacts/build-artifact-windows-latest/FileEncrypter_Win.exe
+            all-artifacts/build-artifact-macos-latest/FileEncrypter_Mac.zip
