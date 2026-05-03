@@ -1,6 +1,8 @@
 # File-Encrypter-Software
 Simple software to encrypt files
 
+<h2>On all operating systems, you should set the app as the default for .LOCKED files. Also, always put the app in the desktop regardless of the OS.</h2>
+
 <h3>How to run in Linux</h3>
 <p>1. Right-click the FileEncrypter_Linux file</p>
 <p>2. Go to Properties.</p>
@@ -15,4 +17,5 @@ Simple software to encrypt files
 <p>1. Open the file: Double-click FileEncrypter_Win.exe.</p>
 <p>2. Click "More info": When the blue box appears, don't click "Don't run." Instead, click the small text link that says "More info".</p>
 <p>3. Run anyway: A new button will appear at the bottom. Click "Run anyway".</p>
+<p> 4. The app will now launch. From now on, you can just open it normally.</p>
 
