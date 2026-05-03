@@ -2,19 +2,13 @@ name: Build and Release
 on:
   push:
     tags:
-      - 'v*' # Triggers build when you push a tag like v1.0
+      - 'v*' 
 
 jobs:
   build:
     strategy:
       matrix:
-        include:
-          - os: windows-latest
-            out_name: FileEncrypter_Win.exe
-            path: dist/FileEncrypter_Win.exe
-          - os: macos-latest
-            out_name: FileEncrypter_Mac.app
-            path: dist/FileEncrypter_Mac.app
+        os: [windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
@@ -24,20 +18,26 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install Dependencies
-        run: pip install -r requirements.txt
-      - name: Build
-        shell: bash
+        run: pip install pyinstaller cryptography
+      
+      - name: Build Windows
+        if: matrix.os == 'windows-latest'
+        run: pyinstaller --noconsole --onefile --icon="icon.ico" --name "FileEncrypter_Win" main.py
+      
+      - name: Build Mac
+        if: matrix.os == 'macos-latest'
         run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            pyinstaller --noconsole --onefile --windowed --icon="icon.ico" --name "FileEncrypter_Win" main.py
-          else
-            pyinstaller --noconsole --onefile --windowed --icon="icon.icns" --name "FileEncrypter_Mac" main.py
-          fi
+          pyinstaller --noconsole --onefile --windowed --icon="icon.icns" --name "FileEncrypter_Mac" main.py
+          cd dist
+          zip -r ../FileEncrypter_Mac.zip FileEncrypter_Mac.app
+
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.out_name }}
-          path: ${{ matrix.path }}
+          name: ${{ matrix.os }}-build
+          path: |
+            dist/*.exe
+            FileEncrypter_Mac.zip
 
   release:
     needs: build
@@ -51,5 +51,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            FileEncrypter_Win.exe/FileEncrypter_Win.exe
-            FileEncrypter_Mac.app/FileEncrypter_Mac.app
+            windows-latest-build/FileEncrypter_Win.exe
+            macos-latest-build/FileEncrypter_Mac.zip
