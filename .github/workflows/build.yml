@@ -2,13 +2,12 @@ name: Build and Release Cross-Platform
 on:
   push:
     tags:
-      - 'v*' # Triggers whenever you push a tag like v1.0, v2.0, etc.
+      - 'v*' 
 
 jobs:
   build:
     strategy:
       matrix:
-        # Run three separate computers at once
         os: [windows-latest, macos-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     
@@ -24,28 +23,27 @@ jobs:
       - name: Install Dependencies
         run: pip install pyinstaller cryptography
 
-      # WINDOWS BUILD
+      # 1. WINDOWS BUILD (Using Absolute Path for Icon)
       - name: Build Windows
         if: matrix.os == 'windows-latest'
         run: |
-          pyinstaller --noconsole --onefile --icon="icon.ico" --name "FileEncrypter_Win" main.py
+          pyinstaller --noconsole --onefile --icon="${{ github.workspace }}/icon.ico" --name "FileEncrypter_Win" main.py
 
-      # MAC BUILD
+      # 2. MAC BUILD (Using Absolute Path for Icon)
       - name: Build Mac
         if: matrix.os == 'macos-latest'
         run: |
-          # Use --icon for the .app bundle
-          pyinstaller --noconsole --onefile --windowed --icon="icon.icns" --name "FileEncrypter_Mac" main.py
+          pyinstaller --noconsole --onefile --windowed --icon="${{ github.workspace }}/icon.icns" --name "FileEncrypter_Mac" main.py
           cd dist
           zip -r ../FileEncrypter_Mac.zip FileEncrypter_Mac.app
 
-      # LINUX BUILD (Icons work differently on Linux, usually bundled as data)
+      # 3. LINUX BUILD
       - name: Build Linux
         if: matrix.os == 'ubuntu-latest'
         run: |
           pyinstaller --noconsole --onefile --name "FileEncrypter_Linux" main.py
 
-      # 4. UPLOAD STAGE (Saves files temporarily)
+      # 4. UPLOAD STAGE
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
@@ -69,7 +67,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          # This glob pattern (**/) finds the files regardless of folder structure
           files: |
             all-assets/**/FileEncrypter_Win.exe
             all-assets/**/FileEncrypter_Mac.zip
