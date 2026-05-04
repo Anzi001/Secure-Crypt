@@ -1,8 +1,7 @@
 # File-Encrypter-Software
 Simple software to encrypt files
 
-<h2>On all operating systems, you should set the app as the default for .LOCKED files. Also, always put the app in the desktop regardless of the OS.</h2>
-
+<h2>On all operating systems, you should set the app as the default for .LOCKED files. Also, always put the app in the desktop regardless of the OS (In the next update, it should automatically do that though.)</h2>
 <h3>How to run in Linux</h3>
 <p>1. Right-click the FileEncrypter_Linux file</p>
 <p>2. Go to Properties.</p>
