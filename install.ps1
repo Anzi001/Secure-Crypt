@@ -1,6 +1,6 @@
 # --- CONFIGURATION ---
-$user = "YOUR_USER"
-$repo = "YOUR_REPO"
+$user = "Anzi001"
+$repo = "File-Encrypter-Software"
 $dest = "$HOME\Desktop\FileEncrypter.exe"
 
 Write-Host "Connecting to GitHub API for $user/$repo..." -ForegroundColor Cyan
