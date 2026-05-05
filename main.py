@@ -8,7 +8,7 @@ from pathlib import Path
 
 # --- CONFIGURATION ---
 MY_EXTENSION = ".locked"
-PROG_NAME = "Quantum-Vault"
+PROG_NAME = "File Encrypter"
 
 def setup_windows_registry():
     """Register .locked file association for Windows."""
