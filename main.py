@@ -1,6 +1,8 @@
-import os, sys, base64
+import os
+import sys
+import threading
 import tkinter as tk
-from tkinter import filedialog, messagebox, simpledialog
+from tkinter import filedialog, messagebox, simpledialog, ttk
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -11,7 +13,7 @@ MY_EXTENSION = ".locked"
 PROG_NAME = "File Encrypter"
 
 def setup_windows_registry():
-    """Register .locked file association for Windows."""
+    """One-time registry association for Windows users."""
     if sys.platform == "win32":
         import ctypes
         import winreg
@@ -23,76 +25,103 @@ def setup_windows_registry():
             
             exe_path = os.path.abspath(sys.executable if getattr(sys, 'frozen', False) else sys.argv[0])
             app_command = f'"{exe_path}" "%1"'
-            
             with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, MY_EXTENSION) as key:
                 winreg.SetValue(key, "", winreg.REG_SZ, "LockedFile")
             with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r"LockedFile\shell\open\command") as key:
                 winreg.SetValue(key, "", winreg.REG_SZ, app_command)
-            with winreg.CreateKey(winreg.HKEY_CLASSES_ROOT, r"LockedFile\DefaultIcon") as key:
-                winreg.SetValue(key, "", winreg.REG_SZ, f"{exe_path},0")
-        except:
-            pass
+        except: pass
 
 class SecureVault:
     def __init__(self, root):
         self.root = root
         self.root.title(PROG_NAME)
-        self.root.geometry("400x280")
+        self.root.geometry("420x350")
         
-        tk.Label(root, text=PROG_NAME, font=("Arial", 16, "bold")).pack(pady=15)
+        # Use cross-platform system font fallbacks
+        font_main = ("Segoe UI", 16, "bold") if sys.platform == "win32" else ("Helvetica", 16, "bold")
+        
+        tk.Label(root, text=PROG_NAME, font=font_main).pack(pady=15)
         tk.Label(root, text="AES-256-GCM Quantum-Resistant", font=("Arial", 8), fg="gray").pack()
+        
+        # Action Buttons
+        tk.Button(root, text="🔒 LOCK FILE", command=lambda: self.start_task(True, False), 
+                  bg="#2c3e50", fg="white", font=("Arial", 10, "bold"), height=2).pack(fill="x", padx=60, pady=5)
+        
+        tk.Button(root, text="🔓 UNLOCK FILE", command=lambda: self.start_task(False, False), 
+                  bg="#27ae60", fg="white", font=("Arial", 10, "bold"), height=2).pack(fill="x", padx=60, pady=5)
 
-        tk.Button(root, text="🔒 LOCK FILE", command=lambda: self.process(True), 
-                  bg="#2c3e50", fg="white", font=("Arial", 10, "bold"), height=2).pack(fill="x", padx=50, pady=10)
+        tk.Label(root, text="--- Folder Tools ---", fg="gray", font=("Arial", 7)).pack(pady=5)
 
-        tk.Button(root, text="🔓 UNLOCK FILE", command=lambda: self.process(False), 
-                  bg="#27ae60", fg="white", font=("Arial", 10, "bold"), height=2).pack(fill="x", padx=50, pady=5)
-
-        # File association trigger
-        if len(sys.argv) > 1 and sys.argv[1].endswith(MY_EXTENSION):
-            self.root.after(500, lambda: self.process(encrypt=False, file_path=sys.argv[1]))
+        tk.Button(root, text="📂 LOCK FOLDER", command=lambda: self.start_task(True, True), 
+                  bg="#34495e", fg="white", font=("Arial", 9)).pack(fill="x", padx=80, pady=2)
+        
+        tk.Button(root, text="📂 UNLOCK FOLDER", command=lambda: self.start_task(False, True), 
+                  bg="#2ecc71", fg="white", font=("Arial", 9)).pack(fill="x", padx=80, pady=2)
 
     def get_key(self, password, salt):
-        """Derives a 256-bit key using 600,000 iterations (OWASP standard)."""
-        kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32, # 256 bits
-            salt=salt,
-            iterations=600000
-        )
+        kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=600000)
         return kdf.derive(password.encode())
 
-    def process(self, encrypt=True, file_path=None):
-        path_str = file_path if file_path else filedialog.askopenfilename()
+    def start_task(self, encrypt, is_folder):
+        if is_folder:
+            path_str = filedialog.askdirectory(title="Select Folder")
+        else:
+            ftypes = [("Locked Files", f"*{MY_EXTENSION}"), ("All Files", "*.*")] if not encrypt else [("All Files", "*.*")]
+            path_str = filedialog.askopenfilename(filetypes=ftypes)
+
         if not path_str: return
-        path = Path(path_str)
-        
-        pwd = simpledialog.askstring("Auth", "Enter Secure Passcode:", show='*')
+        pwd = simpledialog.askstring("Auth", "Enter Passcode:", show='*')
         if not pwd: return
 
-        try:
-            if encrypt:
-                salt, nonce = os.urandom(16), os.urandom(12)
-                aesgcm = AESGCM(self.get_key(pwd, salt))
-                with open(path, "rb") as f:
-                    data = f.read()
-                ciphertext = aesgcm.encrypt(nonce, data, None)
-                output = salt + nonce + ciphertext
-                new_path = path.with_suffix(path.suffix + MY_EXTENSION)
-            else:
-                with open(path, "rb") as f:
-                    data = f.read()
-                salt, nonce, ciphertext = data[:16], data[16:28], data[28:]
-                aesgcm = AESGCM(self.get_key(pwd, salt))
-                output = aesgcm.decrypt(nonce, ciphertext, None)
-                new_path = path.with_suffix('')
+        # Windows-style Progress Popup
+        popup = tk.Toplevel(self.root)
+        popup.title("Processing...")
+        popup.geometry("350x150")
+        popup.attributes("-topmost", True)
+        
+        tk.Label(popup, text=f"{'Locking' if encrypt else 'Unlocking'} item(s)...", font=("Arial", 10)).pack(pady=10)
+        prog = ttk.Progressbar(popup, orient="horizontal", length=280, mode="indeterminate")
+        prog.pack(pady=10)
+        prog.start(10)
 
-            with open(new_path, "wb") as f:
-                f.write(output)
-            os.remove(path)
-            messagebox.showinfo("Success", f"File {'Encrypted' if encrypt else 'Decrypted'}!")
+        threading.Thread(target=self.process, args=(encrypt, path_str, pwd, popup, is_folder), daemon=True).start()
+
+    def process_file(self, path, aesgcm_factory, encrypt, pwd):
+        """Internal helper to handle single file crypto."""
+        if encrypt:
+            salt, nonce = os.urandom(16), os.urandom(12)
+            aesgcm = AESGCM(self.get_key(pwd, salt))
+            with open(path, "rb") as f: data = f.read()
+            ciphertext = aesgcm.encrypt(nonce, data, None)
+            new_path = path.with_suffix(path.suffix + MY_EXTENSION)
+            with open(new_path, "wb") as f: f.write(salt + nonce + ciphertext)
+        else:
+            with open(path, "rb") as f: data = f.read()
+            salt, nonce, ciphertext = data[:16], data[16:28], data[28:]
+            aesgcm = AESGCM(self.get_key(pwd, salt))
+            output = aesgcm.decrypt(nonce, ciphertext, None)
+            new_path = Path(str(path)[:-len(MY_EXTENSION)]) if str(path).endswith(MY_EXTENSION) else path.with_suffix('')
+            with open(new_path, "wb") as f: f.write(output)
+        os.remove(path)
+
+    def process(self, encrypt, path_str, pwd, popup, is_folder):
+        try:
+            base_path = Path(path_str)
+            if is_folder:
+                # Iterate all files in directory using pathlib
+                for item in base_path.iterdir():
+                    if item.is_file():
+                        if not encrypt and not str(item).endswith(MY_EXTENSION): continue
+                        if encrypt and str(item).endswith(MY_EXTENSION): continue
+                        self.process_file(item, AESGCM, encrypt, pwd)
+            else:
+                self.process_file(base_path, AESGCM, encrypt, pwd)
+            
+            self.root.after(0, popup.destroy)
+            messagebox.showinfo("Done", "Operation Successful!")
         except Exception:
-            messagebox.showerror("Security Error", "Incorrect passcode or corrupted data.")
+            self.root.after(0, popup.destroy)
+            messagebox.showerror("Error", "Security Failure: Wrong passcode or corrupted data.")
 
 if __name__ == "__main__":
     if sys.platform == "win32" and len(sys.argv) == 1:
