@@ -23,28 +23,28 @@ jobs:
       # WINDOWS
       - name: Build Windows
         if: matrix.os == 'windows-latest'
-        run: pyinstaller --noconsole --onefile --icon="${{ github.workspace }}/icon.ico" --name "FileEncrypter_Win" main.py
+        run: pyinstaller --noconsole --onefile --icon="${{ github.workspace }}/icon.ico" --name "SecureCrypt_Win" main.py
 
       # MAC
       - name: Build Mac
         if: matrix.os == 'macos-latest'
         run: |
-          pyinstaller --noconsole --onefile --windowed --icon="${{ github.workspace }}/icon.icns" --name "FileEncrypter_Mac" main.py
-          cd dist && zip -r ../FileEncrypter_Mac.zip FileEncrypter_Mac.app
+          pyinstaller --noconsole --onefile --windowed --icon="${{ github.workspace }}/icon.icns" --name "SecureCrypt_Mac" main.py
+          cd dist && zip -r ../SecureCrypt_Mac.zip SecureCrypt_Mac.app
 
       # LINUX
       - name: Build Linux
         if: matrix.os == 'ubuntu-latest'
-        run: pyinstaller --noconsole --onefile --name "FileEncrypter_Linux" main.py
+        run: pyinstaller --noconsole --onefile --name "SecureCrypt_Linux" main.py
 
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: build-${{ matrix.os }}
           path: |
-            dist/FileEncrypter_Win.exe
-            dist/FileEncrypter_Linux
-            FileEncrypter_Mac.zip
+            dist/SecureCrypt_Win.exe
+            dist/SecureCrypt_Linux
+            SecureCrypt_Mac.zip
 
   release:
     needs: build
@@ -60,6 +60,6 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            assets/**/FileEncrypter_Win.exe
-            assets/**/FileEncrypter_Mac.zip
-            assets/**/FileEncrypter_Linux
+            assets/**/SecureCrypt_Win.exe
+            assets/**/SecureCrypt_Mac.zip
+            assets/**/SecureCrypt_Linux
