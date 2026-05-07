@@ -9,8 +9,8 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from pathlib import Path
 
 # --- CONFIGURATION ---
-MY_EXTENSION = ".locked"
-PROG_NAME = "File Encrypter"
+MY_EXTENSION = ".securecrypt"
+PROG_NAME = "Secure Crypt"
 
 def setup_windows_registry():
     """One-time registry association for Windows users."""
