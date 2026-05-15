@@ -1,7 +1,7 @@
 # Secure-Crypt
 Simple software to encrypt **ALL** files
 
-<h2>On all operating systems, you should set the app as the default for .SECURECRYPT files. Also, always put the app in the desktop regardless of the OS (In the next update, it should automatically do that though.)</h2>
+<h2>Always put the app in the desktop regardless of the OS (just for easier access)</h2>
 <h3>How to run in Linux</h3>
 <p>1. Right-click the FileEncrypter_Linux file</p>
 <p>2. Go to Properties.</p>
@@ -18,3 +18,4 @@ Simple software to encrypt **ALL** files
 <p>3. Run anyway: A new button will appear at the bottom. Click "Run anyway".</p>
 <p> 4. The app will now launch. From now on, you can just open it normally.</p>
 
+<h3>You can use the README (Message from file sender).txt file to explain what a SECURCRYPT file is to people you are sending a SECURECRYPT file to.</h3>
