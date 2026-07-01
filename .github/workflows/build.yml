@@ -23,7 +23,7 @@ jobs:
       # WINDOWS
       - name: Build Windows
         if: matrix.os == 'windows-latest'
-        run: pyinstaller --noconsole --onefile --icon="${{ github.workspace }}/icon.ico" --name "SecureCrypt_Win" --add-data "vault_engine.py;." main.py
+        run: pyinstaller --noconsole --onefile --icon="${{ github.workspace }}/icon.ico" --name "SecureCrypt_Win" --add-data "vault_engine.py:." main.py
 
       # MAC
       - name: Build Mac
